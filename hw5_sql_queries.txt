@@ -1,0 +1,76 @@
+-- p1:
+
+USE mydb;
+
+SELECT 
+    order_details.id,
+    order_details.order_id,
+    order_details.product_id,
+    order_details.quantity,
+    (SELECT orders.customer_id 
+     FROM orders 
+     WHERE orders.id = order_details.order_id) AS customer_id
+FROM order_details;
+
+-- p2:
+
+SELECT *
+FROM order_details
+WHERE order_details.order_id IN (
+    SELECT orders.id
+    FROM orders
+    WHERE orders.shipper_id = 3
+);
+
+-- p3:
+
+SELECT 
+    filtered_order_details.order_id, 
+    AVG(filtered_order_details.quantity) AS average_quantity
+FROM (
+    SELECT order_id, quantity
+    FROM order_details
+    WHERE quantity > 10
+) AS filtered_order_details
+GROUP BY filtered_order_details.order_id;
+
+-- p4:
+
+WITH temp AS (
+    SELECT order_id, quantity
+    FROM order_details
+    WHERE quantity > 10
+)
+SELECT 
+    order_id, 
+    AVG(quantity) AS average_quantity
+FROM temp
+GROUP BY order_id;
+
+-- p5:
+
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS DivideNumbers $$
+
+CREATE FUNCTION DivideNumbers(numerator FLOAT, denominator FLOAT) 
+RETURNS FLOAT
+NO SQL
+BEGIN 
+    IF denominator = 0 THEN 
+        RETURN NULL; 
+    ELSE 
+        RETURN numerator / denominator; 
+    END IF; 
+END $$
+
+DELIMITER ;
+
+
+SELECT 
+    order_id, 
+    product_id, 
+    DivideNumbers(quantity, 2) AS half_quantity
+FROM 
+    order_details;
+
